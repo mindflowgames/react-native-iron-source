@@ -42,7 +42,13 @@ RCT_EXPORT_METHOD(showInterstitial:(NSString*) placementName)
 // Called if showing the Interstitial for the user has failed.
 //You can learn about the reason by examining the ‘error’ value
 -(void)interstitialDidFailToShowWithError:(NSError *)error {
-    [self sendEventWithName:@"interstitialDidFailToShowWithError" body:error.userInfo[@"NSLocalizedDescription"]];
+    @try {
+        NSString *errorMessage = [NSString stringWithFormat:@"code: %ld; message: %@; domain: %@", (long)error.code, error.localizedDescription, error.domain];
+        [self sendEventWithName:@"interstitialDidFailToShowWithError" body:@{@"message": errorMessage}];
+    }
+    @catch (NSException *e) {
+        [self sendEventWithName:@"interstitialDidFailToShowWithError" body:@{@"message": e.reason}];
+    }
 }
 //Called each time the end user has clicked on the Interstitial ad.
 -(void)didClickInterstitial {
@@ -58,6 +64,12 @@ RCT_EXPORT_METHOD(showInterstitial:(NSString*) placementName)
 }
 //Invoked when there is no Interstitial Ad available after calling load //function. @param error - will contain the failure code and description.
 -(void)interstitialDidFailToLoadWithError:(NSError *)error {
-    [self sendEventWithName:@"interstitialDidFailToLoadWithError" body:error.userInfo[@"NSLocalizedDescription"]];
+    @try {
+        NSString *errorMessage = [NSString stringWithFormat:@"code: %ld; message: %@; domain: %@", (long)error.code, error.localizedDescription, error.domain];
+        [self sendEventWithName:@"interstitialDidFailToLoadWithError" body:@{@"message": errorMessage}];
+    }
+    @catch (NSException *e) {
+        [self sendEventWithName:@"interstitialDidFailToLoadWithError" body:@{@"message": e.reason}];
+    }
 }
 @end

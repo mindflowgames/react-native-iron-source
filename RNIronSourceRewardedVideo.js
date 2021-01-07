@@ -12,7 +12,8 @@ const eventHandlers = {
   ironSourceRewardedVideoClosedByError: new Map(),
   ironSourceRewardedVideoAdStarted: new Map(),
   ironSourceRewardedVideoAdEnded: new Map(),
-  ironSourceRewardedVideoAdRewarded:new Map()
+  ironSourceRewardedVideoAdRewarded: new Map(),
+  ironSourceRewardedVideoClicked: new Map()
 };
 
 const addEventListener = (type, handler) => {
@@ -25,6 +26,7 @@ const addEventListener = (type, handler) => {
     case 'ironSourceRewardedVideoAdStarted':
     case 'ironSourceRewardedVideoAdEnded':
     case 'ironSourceRewardedVideoAdRewarded':
+    case 'ironSourceRewardedVideoClicked':
       eventHandlers[type].set(handler, IronSourceRewardedVideoEventEmitter.addListener(type, handler));
       break;
     case 'ironSourceRewardedVideoClosedByUser':
@@ -58,6 +60,7 @@ const removeAllListeners = () => {
   IronSourceRewardedVideoEventEmitter.removeAllListeners('ironSourceRewardedVideoAdStarted');
   IronSourceRewardedVideoEventEmitter.removeAllListeners('ironSourceRewardedVideoAdEnded');
   IronSourceRewardedVideoEventEmitter.removeAllListeners('ironSourceRewardedVideoAdRewarded');
+  IronSourceRewardedVideoEventEmitter.removeAllListeners('ironSourceRewardedVideoClicked');
 };
 
 module.exports = {

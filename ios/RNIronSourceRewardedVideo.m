@@ -11,6 +11,7 @@ NSString *const kIronSourceRewardedVideoDidStart = @"ironSourceRewardedVideoDidS
 NSString *const kIronSourceRewardedVideoDidOpen = @"ironSourceRewardedVideoDidOpen";
 NSString *const kIronSourceRewardedVideoAdStarted = @"ironSourceRewardedVideoAdStarted";
 NSString *const kIronSourceRewardedVideoAdEnded = @"ironSourceRewardedVideoAdEnded";
+NSString *const kIronSourceRewardedVideoClicked = @"ironSourceRewardedVideoClicked";
 
 @implementation RNIronSourceRewardedVideo {
     RCTResponseSenderBlock _requestRewardedVideoCallback;
@@ -33,7 +34,8 @@ RCT_EXPORT_MODULE()
              kIronSourceRewardedVideoDidStart,
              kIronSourceRewardedVideoDidOpen,
              kIronSourceRewardedVideoAdStarted,
-             kIronSourceRewardedVideoAdEnded
+             kIronSourceRewardedVideoAdEnded,
+             kIronSourceRewardedVideoClicked
              ];
 }
 
@@ -52,14 +54,12 @@ RCT_EXPORT_METHOD(initializeRewardedVideo)
 RCT_EXPORT_METHOD(showRewardedVideo:(NSString*)placementName)
 {
     if ([IronSource hasRewardedVideo]) {
-        NSLog(@"showRewardedVideo - video available");
         [self sendEventWithName:kIronSourceRewardedVideoAvailable body:nil];
-        
+
         dispatch_async(dispatch_get_main_queue(), ^{
             [IronSource showRewardedVideoWithViewController:RCTPresentedViewController() placement:placementName];
         });
     } else {
-        NSLog(@"showRewardedVideo - video unavailable");
         [self sendEventWithName:kIronSourceRewardedVideoUnavailable body:nil];
     }
 }
@@ -70,7 +70,6 @@ RCT_EXPORT_METHOD(isRewardedVideoAvailable:(RCTPromiseResolveBlock)resolve rejec
         resolve(@([IronSource hasRewardedVideo]));
     }
     @catch (NSException *exception) {
-        NSLog(@"isRewardedVideoAvailable, Error, %@", exception.reason);
         reject(@"isRewardedVideoAvailable, Error, %@", exception.reason, nil);
     }
 }
@@ -88,10 +87,8 @@ RCT_EXPORT_METHOD(setDynamicUserId:(NSString*)userId)
  */
  - (void)rewardedVideoHasChangedAvailability:(BOOL)available {
      if(available == YES){
-         NSLog(@">>>>>>>>>>>> RewardedVideo available");
          [self sendEventWithName:kIronSourceRewardedVideoAvailable body:nil];
      } else {
-         NSLog(@">>>>>>>>>>>> RewardedVideo NOT available");
          [self sendEventWithName:kIronSourceRewardedVideoUnavailable body:nil];
      }
  }
@@ -99,7 +96,6 @@ RCT_EXPORT_METHOD(setDynamicUserId:(NSString*)userId)
 - (void)didReceiveRewardForPlacement:(ISPlacementInfo*)placementInfo {
     NSNumber * rewardAmount = [placementInfo rewardAmount];
     NSString * rewardName = [placementInfo rewardName];
-    NSLog(@">>>>>>>>>>>> RewardedVideo %@ reward amount %@", rewardName, rewardAmount);
     [self sendEventWithName:kIronSourceRewardedVideoAdRewarded body:@{
                                                                       @"rewardName": rewardName,
                                                                       @"rewardAmount": rewardAmount
@@ -112,15 +108,19 @@ RCT_EXPORT_METHOD(setDynamicUserId:(NSString*)userId)
  * failure. The error contains error.code and error.message.
  */
 - (void)rewardedVideoDidFailToShowWithError:(NSError *)error {
-    NSLog(@">>>>>>>>>>>> RewardedVideo ad closed due to an error: %@!", error);
-    [self sendEventWithName:kIronSourceRewardedVideoClosedByError body:nil];
+    @try {
+        NSString *errorMessage = [NSString stringWithFormat:@"code: %ld; message: %@; domain: %@", (long)error.code, error.localizedDescription, error.domain];
+        [self sendEventWithName:kIronSourceRewardedVideoClosedByError body:@{@"message": errorMessage}];
+    }
+    @catch (NSException *e) {
+        [self sendEventWithName:kIronSourceRewardedVideoClosedByError body:@{@"message": e.reason}];
+    }
 }
 
 /**
  * Invoked when the RewardedVideo ad view has opened.
  */
 - (void)rewardedVideoDidOpen{
-    NSLog(@">>>>>>>>>>>> RewardedVideo opened!");
     // @Deprecated kIronSourceRewardedVideoDidStart
     [self sendEventWithName:kIronSourceRewardedVideoDidStart body:nil];
     [self sendEventWithName:kIronSourceRewardedVideoDidOpen body:nil];
@@ -131,7 +131,6 @@ RCT_EXPORT_METHOD(setDynamicUserId:(NSString*)userId)
  * RewardedVideo ad.
  */
 - (void)rewardedVideoDidClose {
-    NSLog(@">>>>>>>>>>>> RewardedVideo closed!");
     [self sendEventWithName:kIronSourceRewardedVideoClosedByUser body:nil];
 }
 
@@ -148,7 +147,6 @@ RCT_EXPORT_METHOD(setDynamicUserId:(NSString*)userId)
  * Invoked when the video ad starts playing.
  */
 - (void)rewardedVideoDidStart {
-    NSLog(@">>>>>>>>>>>> RewardedVideo Ad Started!");
     [self sendEventWithName:kIronSourceRewardedVideoAdStarted body:nil];
 }
 
@@ -157,8 +155,11 @@ RCT_EXPORT_METHOD(setDynamicUserId:(NSString*)userId)
  * Invoked when the video ad finishes playing.
  */
 - (void)rewardedVideoDidEnd {
-    NSLog(@">>>>>>>>>>>> RewardedVideo Ad Ended!");
     [self sendEventWithName:kIronSourceRewardedVideoAdEnded body:nil];
+}
+
+- (void)didClickRewardedVideo:(ISPlacementInfo *)placementInfo {
+    [self sendEventWithName:kIronSourceRewardedVideoClicked body:nil];
 }
 
 @end

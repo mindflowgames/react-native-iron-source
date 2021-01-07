@@ -207,7 +207,13 @@ RCT_EXPORT_METHOD(destroyBanner) {
 
 - (void)bannerDidFailToLoadWithError:(NSError *)error {
     if (hasListeners) {
-        [self sendEventWithName:kIronSourceBannerDidFailToLoadWithError body:nil];
+        @try {
+            NSString *errorMessage = [NSString stringWithFormat:@"code: %ld; message: %@; domain: %@", (long)error.code, error.localizedDescription, error.domain];
+            [self sendEventWithName:kIronSourceBannerDidFailToLoadWithError body:@{@"message": errorMessage}];
+        }
+        @catch (NSException *e) {
+            [self sendEventWithName:kIronSourceBannerDidFailToLoadWithError body:@{@"message": e.reason}];
+        }
     }
     self->rejectLoadBanner(@"Error", @"Failed to load banner", error);
 }
